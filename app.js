@@ -11,6 +11,7 @@ var mongoose = require('mongoose');
 // https://github.com/sendgrid/sendgrid-nodejs
 const sgMail = require('@sendgrid/mail');
 var AWS = require("aws-sdk");
+const { v4: uuidv4 } = require('uuid');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  
@@ -44,7 +45,7 @@ var params = {
         { AttributeName: "id", KeyType: "HASH"},  //Partition key
     ],
     AttributeDefinitions: [    
-        { AttributeName: "id", AttributeType: "N" },   
+        { AttributeName: "id", AttributeType: "S" },   
 
     ],
     ProvisionedThroughput: {       
@@ -80,7 +81,7 @@ app.get("/", function(req, res){
         res.render("home", {
           title: "Home",
           intro: homeStartingContent,
-          posts: data,
+          posts: data.Items,
         });
     }
   }
@@ -120,7 +121,7 @@ app.get('/posts/:postId', function (req, res) {
       console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
     } else {
       res.render("post", {
-        post: data,
+        post: data.Item,
       }); 
       console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
     }
@@ -141,6 +142,7 @@ app.post("/compose", function(req, res){
   var params = {
     TableName:table,
     Item:{
+        "id": uuidv4(),
         "title": req.body.title,
         "body": req.body.post,
         "date": postdate 
