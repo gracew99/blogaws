@@ -10,6 +10,8 @@ var mongoose = require('mongoose');
 // using Twilio SendGrid's v3 Node.js Library
 // https://github.com/sendgrid/sendgrid-nodejs
 const sgMail = require('@sendgrid/mail');
+var AWS = require("aws-sdk");
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -25,24 +27,63 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://newuser:newpassword@cluster0-shard-00-00-b3bgw.mongodb.net:27017,cluster0-shard-00-01-b3bgw.mongodb.net:27017,cluster0-shard-00-02-b3bgw.mongodb.net:27017/todolistdb?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority");var postSchema = new mongoose.Schema({
-  title: String,
-  body: String,
-  date: String,
-  // link: String
+
+AWS.config.update({
+  region: "us-west-2",
+  endpoint: "http://dynamodb.us-west-2.amazonaws.com",
+  accessKeyId: "AKIA4KV2OYXTOCJ2UEGS",
+  secretAccessKey: "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"
+
 });
 
-var Post = mongoose.model('Post', postSchema);
+var dynamodb = new AWS.DynamoDB();
+
+var params = {
+    TableName : "Blogdb",
+    KeySchema: [       
+        { AttributeName: "id", KeyType: "HASH"},  //Partition key
+    ],
+    AttributeDefinitions: [    
+        { AttributeName: "id", AttributeType: "N" },   
+
+    ],
+    ProvisionedThroughput: {       
+        ReadCapacityUnits: 10, 
+        WriteCapacityUnits: 10
+    }
+};
+
+dynamodb.createTable(params, function(err, data) {
+    if (err) {
+        console.error("Unable to create table. Error JSON:", JSON.stringify(err, null, 2));
+    } else {
+        console.log("Created table. Table description JSON:", JSON.stringify(data, null, 2));
+    }
+});
+
+var docClient = new AWS.DynamoDB.DocumentClient();
+var table = "Blogdb";
 
 
 app.get("/", function(req, res){
-  Post.find(function(err, posts){
-    res.render("home", {
-      title: "Home",
-      intro: homeStartingContent,
-      posts: posts,
-    });
-  });
+  var params = {
+    TableName: table,
+  }
+
+  console.log("Scanning Movies table.");
+  docClient.scan(params, onScan);
+
+  function onScan(err, data) {
+    if (err) {
+        console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
+    } else {
+        res.render("home", {
+          title: "Home",
+          intro: homeStartingContent,
+          posts: data,
+        });
+    }
+  }
 
 });
 
@@ -63,29 +104,25 @@ app.get("/contact", function(req, res){
 
 app.get('/posts/:postId', function (req, res) {
   const pid = req.params.postId;
-  // titles.forEach(function(title){
-  //   if (title=== pname){
-  //     console.log("yes");
-  //   }
-  // });
+  var params = {
+    TableName: table,
+    Key:{
+        "id": pid
+    }
+  };
 
-
-  // non db versio
-  // const index = _.findIndex(titles, function(title){
-  //   return _.kebabCase(title) === pname;
-  // });
-
-  Post.findOne({_id: pid}, function(err, found){ 
-    if (err){
+  docClient.get(params, function(err, data) {
+    if (err) {
       res.render("page", {
         title: "Error: No such post",
         intro: ""
       });
-    }
-    else{
+      console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+    } else {
       res.render("post", {
-        post: found,
-      });
+        post: data,
+      }); 
+      console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
     }
   });
 
@@ -100,23 +137,29 @@ app.get("/compose", function(req, res){
 app.post("/compose", function(req, res){
   // const link = "/posts/" + _.kebabCase(req.body.title);
   var postdate = date.date();
-  var post = new Post({
-    title: req.body.title,
-    body: req.body.post,
-    date: postdate,
-    // link: link
-  });
 
-  post.save(function(err){
+  var params = {
+    TableName:table,
+    Item:{
+        "title": req.body.title,
+        "body": req.body.post,
+        "date": postdate 
+    }
+  };
+
+  console.log("Adding a new item...");
+  docClient.put(params, function(err, data) {
     if (err) {
+      console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
       res.render("page", {
         title: "Error: No such post",
         intro: ""
       });
     }
-    else
+    else{
       res.redirect("/");
-
+      console.log("Added item:", JSON.stringify(data, null, 2));
+    }
   });
 
   const msg = {
