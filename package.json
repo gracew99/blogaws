@@ -1,5 +1,5 @@
 {
-  "name": "ejs-challenge",
+  "name": "blog-aws",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -8,11 +8,12 @@
   },
   "author": "",
   "license": "ISC",
-  "engines":{
+  "engines": {
     "node": "12.16.2"
   },
   "dependencies": {
     "@sendgrid/mail": "^7.1.1",
+    "aws-sdk": "^2.684.0",
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
