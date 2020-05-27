@@ -32,8 +32,8 @@ app.use(express.static("public"));
 AWS.config.update({
   region: "us-west-2",
   endpoint: "http://dynamodb.us-west-2.amazonaws.com",
-  accessKeyId: "AKIA4KV2OYXTOCJ2UEGS",
-  secretAccessKey: "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"
+  accessKeyId: process.env.accessKeyId,
+  secretAccessKey: process.env.secretAccessKey
 
 });
 
