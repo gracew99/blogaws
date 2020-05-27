@@ -45,21 +45,21 @@ var params = {
         { AttributeName: "id", KeyType: "HASH"},  //Partition key
     ],
     AttributeDefinitions: [    
-        { AttributeName: "id", AttributeType: "S" },   
-        { AttributeName: "title", AttributeType: "S" },   
-        { AttributeName: "status", AttributeType: "S" },   
+        { AttributeName: "id", AttributeType: "S" },    
+        { AttributeName: "postdate", AttributeType: "S" },
+        { AttributeName: "posttime", AttributeType: "S" }
 
     ],
     GlobalSecondaryIndexes: [ 
       { 
-         IndexName: "StatusIndex",
+         IndexName: "DateTimeIndex",
          KeySchema: [ 
             { 
-               AttributeName: "status",
+               AttributeName: "postdate",
                KeyType: "HASH"
             },
             { 
-              AttributeName: "title",
+              AttributeName: "posttime",
               KeyType: "RANGE"
            }
          ],
@@ -91,20 +91,15 @@ var table = "Blogdb";
 
 
 app.get("/", function(req, res){
+  var today = date.date();
   var params = {
     TableName: table,
-    IndexName: "StatusIndex",
-    KeyConditions: {
-      status: {
-          ComparisonOperator: "EQ", 
-          AttributeValueList: [ 
-              "OK"
-          ]
-      }
-    }    
+    IndexName: "DateTimeIndex",
+    KeyConditionExpression: "postdate = :date1",
+    ExpressionAttributeValues: {
+      ":date1": today
+    }
   };
-
-  console.log("Scanning Movies table.");
   docClient.query(params, onquery);
 
   function onquery(err, data) {
@@ -172,6 +167,7 @@ app.get("/compose", function(req, res){
 app.post("/compose", function(req, res){
   // const link = "/posts/" + _.kebabCase(req.body.title);
   var postdate = date.date();
+  var posttime = date.time();
 
   var params = {
     TableName:table,
@@ -179,12 +175,14 @@ app.post("/compose", function(req, res){
         "id": uuidv4(),
         "body": req.body.post,
         "title": req.body.title,
-        "posttime": postdate,
-        "status": 'OK'
+        "postdate": postdate,
+        "posttime": posttime
+
     }
   };
 
   console.log("Adding a new item...");
+  console.log(postdate);
   docClient.put(params, function(err, data) {
     if (err) {
       console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
@@ -197,7 +195,6 @@ app.post("/compose", function(req, res){
       res.redirect("/");
       console.log("Added item:", JSON.stringify(data, null, 2));
     }
-  });
 
   const msg = {
     to: [
