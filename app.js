@@ -46,11 +46,30 @@ var params = {
     ],
     AttributeDefinitions: [    
         { AttributeName: "id", AttributeType: "S" },   
+        { AttributeName: "date", AttributeType: "S" },   
 
     ],
+    GlobalSecondaryIndexes: [ 
+      { 
+         IndexName: "DateTimeIndex",
+         KeySchema: [ 
+            { 
+               AttributeName: "date",
+               KeyType: "HASH"
+            }
+         ],
+         Projection: { 
+            ProjectionType: "ALL"
+         },
+         ProvisionedThroughput: { 
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1
+         }
+      }
+   ],
     ProvisionedThroughput: {       
-        ReadCapacityUnits: 10, 
-        WriteCapacityUnits: 10
+        ReadCapacityUnits: 1, 
+        WriteCapacityUnits: 1
     }
 };
 
@@ -145,7 +164,7 @@ app.post("/compose", function(req, res){
         "id": uuidv4(),
         "title": req.body.title,
         "body": req.body.post,
-        "date": postdate 
+        "date": postdate,
     }
   };
 
