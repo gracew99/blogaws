@@ -46,17 +46,22 @@ var params = {
     ],
     AttributeDefinitions: [    
         { AttributeName: "id", AttributeType: "S" },   
-        { AttributeName: "date", AttributeType: "S" },   
+        { AttributeName: "title", AttributeType: "S" },   
+        { AttributeName: "status", AttributeType: "S" },   
 
     ],
     GlobalSecondaryIndexes: [ 
       { 
-         IndexName: "DateTimeIndex",
+         IndexName: "StatusIndex",
          KeySchema: [ 
             { 
-               AttributeName: "date",
+               AttributeName: "status",
                KeyType: "HASH"
-            }
+            },
+            { 
+              AttributeName: "title",
+              KeyType: "RANGE"
+           }
          ],
          Projection: { 
             ProjectionType: "ALL"
@@ -88,15 +93,25 @@ var table = "Blogdb";
 app.get("/", function(req, res){
   var params = {
     TableName: table,
-  }
+    IndexName: "StatusIndex",
+    KeyConditions: {
+      status: {
+          ComparisonOperator: "EQ", 
+          AttributeValueList: [ 
+              "OK"
+          ]
+      }
+    }    
+  };
 
   console.log("Scanning Movies table.");
-  docClient.scan(params, onScan);
+  docClient.query(params, onquery);
 
-  function onScan(err, data) {
+  function onquery(err, data) {
     if (err) {
-        console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
+        console.error("Unable to query the table. Error JSON:", JSON.stringify(err, null, 2));
     } else {
+        console.log(data);
         res.render("home", {
           title: "Home",
           intro: homeStartingContent,
@@ -162,9 +177,10 @@ app.post("/compose", function(req, res){
     TableName:table,
     Item:{
         "id": uuidv4(),
-        "title": req.body.title,
         "body": req.body.post,
-        "date": postdate,
+        "title": req.body.title,
+        "posttime": postdate,
+        "status": 'OK'
     }
   };
 
