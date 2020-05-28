@@ -9,6 +9,6 @@ function date(){
 
 function time(){
     var d= new Date();
-    return (d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds());
+    return (("0"+d.getHours()).slice(-2) + ":" + ("0"+d.getMinutes()).slice(-2) + ":" + ("0" + d.getSeconds()).slice(-2));
 }
 

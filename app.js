@@ -13,6 +13,8 @@ const sgMail = require('@sendgrid/mail');
 var AWS = require("aws-sdk");
 const { v4: uuidv4 } = require('uuid');
 const s3 = require(__dirname+"/s3.js");
+const db = require(__dirname+"/db.js");
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -33,96 +35,24 @@ s3.inits3();
 // s3.creates3("nodejs3bucket");
 // s3.uploads3("nodejs3bucket", "./helloworld.pdf");
 s3.lists3("nodejs3bucket");
-s3.downloads3("nodejs3bucket", "download.pdf", "helloworld.pdf");
+// s3.downloads3("nodejs3bucket", "download.pdf", "helloworld.pdf");
 
 
-AWS.config.update({
-  region: "us-west-2",
-  endpoint: "http://dynamodb.us-west-2.amazonaws.com",
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey
-
-});
-
-
-
-var dynamodb = new AWS.DynamoDB();
-
-var params = {
-    TableName : "Blogdb",
-    KeySchema: [       
-        { AttributeName: "id", KeyType: "HASH"},  //Partition key
-    ],
-    AttributeDefinitions: [    
-        { AttributeName: "id", AttributeType: "S" },    
-        { AttributeName: "postdate", AttributeType: "S" },
-        { AttributeName: "posttime", AttributeType: "S" }
-
-    ],
-    GlobalSecondaryIndexes: [ 
-      { 
-         IndexName: "DateTimeIndex",
-         KeySchema: [ 
-            { 
-               AttributeName: "postdate",
-               KeyType: "HASH"
-            },
-            { 
-              AttributeName: "posttime",
-              KeyType: "RANGE"
-           }
-         ],
-         Projection: { 
-            ProjectionType: "ALL"
-         },
-         ProvisionedThroughput: { 
-            ReadCapacityUnits: 1,
-            WriteCapacityUnits: 1
-         }
-      }
-   ],
-    ProvisionedThroughput: {       
-        ReadCapacityUnits: 1, 
-        WriteCapacityUnits: 1
-    }
-};
-
-dynamodb.createTable(params, function(err, data) {
-    if (err) {
-        console.error("Unable to create table. Error JSON:", JSON.stringify(err, null, 2));
-    } else {
-        console.log("Created table. Table description JSON:", JSON.stringify(data, null, 2));
-    }
-});
+db.initdb();
 
 var docClient = new AWS.DynamoDB.DocumentClient();
-var table = "Blogdb";
+var table = "TestBlogdb";
 
 
 app.get("/", function(req, res){
-  var today = date.date();
-  var params = {
-    TableName: table,
-    IndexName: "DateTimeIndex",
-    KeyConditionExpression: "postdate = :date1",
-    ExpressionAttributeValues: {
-      ":date1": today
-    }
-  };
-  docClient.query(params, onquery);
-
-  function onquery(err, data) {
-    if (err) {
-        console.error("Unable to query the table. Error JSON:", JSON.stringify(err, null, 2));
-    } else {
-        console.log(data);
-        res.render("home", {
-          title: "Home",
-          intro: homeStartingContent,
-          posts: data.Items,
-        });
-    }
-  }
+  // this ensures that we will render AFTER we have retrieved data
+  db.querydb(table, docClient, function(data){
+    res.render("home", {
+      title: "Home",
+      intro: homeStartingContent,
+      posts: data.Items,
+    });  
+  });  
 
 });
 
@@ -143,25 +73,17 @@ app.get("/contact", function(req, res){
 
 app.get('/posts/:postId', function (req, res) {
   const pid = req.params.postId;
-  var params = {
-    TableName: table,
-    Key:{
-        "id": pid
-    }
-  };
-
-  docClient.get(params, function(err, data) {
-    if (err) {
+  db.getdb(table, pid, docClient, function(data){
+    if (data === null){
       res.render("page", {
         title: "Error: No such post",
         intro: ""
-      });
-      console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-    } else {
+        });
+    }
+    else{
       res.render("post", {
         post: data.Item,
       }); 
-      console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
     }
   });
 
@@ -175,26 +97,8 @@ app.get("/compose", function(req, res){
 
 app.post("/compose", function(req, res){
   // const link = "/posts/" + _.kebabCase(req.body.title);
-  var postdate = date.date();
-  var posttime = date.time();
-
-  var params = {
-    TableName:table,
-    Item:{
-        "id": uuidv4(),
-        "body": req.body.post,
-        "title": req.body.title,
-        "postdate": postdate,
-        "posttime": posttime
-
-    }
-  };
-
-  console.log("Adding a new item...");
-  console.log(postdate);
-  docClient.put(params, function(err, data) {
-    if (err) {
-      console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+  db.putdb(table, req.body.post, req.body.title, docClient, function(data){
+    if (data === null){
       res.render("page", {
         title: "Error: No such post",
         intro: ""
@@ -202,27 +106,9 @@ app.post("/compose", function(req, res){
     }
     else{
       res.redirect("/");
-      console.log("Added item:", JSON.stringify(data, null, 2));
     }
-
-  const msg = {
-    to: [
-      {email: '7.knicksfan.7@gmail.com'}, 
-      {email: 'gw297@scarletmail.rutgers.edu'}],
-    from: '7.knicksfan.7@gmail.com',
-    subject: req.body.title,
-    text: req.body.post
-  };
-  sgMail.send(msg, function(err){
-    if (err)
-      console.log(err);
-    else
-      console.log("sent");
-
   });
   
-
-  });
 });
 
 
