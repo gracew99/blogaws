@@ -12,7 +12,7 @@ var mongoose = require('mongoose');
 const sgMail = require('@sendgrid/mail');
 var AWS = require("aws-sdk");
 const { v4: uuidv4 } = require('uuid');
-
+const s3 = require(__dirname+"/s3.js");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
@@ -29,6 +29,13 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
 
+s3.inits3();
+// s3.creates3("nodejs3bucket");
+// s3.uploads3("nodejs3bucket", "./helloworld.pdf");
+s3.lists3("nodejs3bucket");
+s3.downloads3("nodejs3bucket", "download.pdf", "helloworld.pdf");
+
+
 AWS.config.update({
   region: "us-west-2",
   endpoint: "http://dynamodb.us-west-2.amazonaws.com",
@@ -36,6 +43,8 @@ AWS.config.update({
   secretAccessKey: process.env.secretAccessKey
 
 });
+
+
 
 var dynamodb = new AWS.DynamoDB();
 
