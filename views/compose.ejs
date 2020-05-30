@@ -5,8 +5,9 @@
 
 
 
-<form action="/compose" method="post">
 
+ <form method="POST" action="/upload" enctype="multipart/form-data">
+    
     <div class="form-group">
         <label for="title">Title</label>
         <input type="text" class="form-control" name="title" id="title" rows="1"></input>    
@@ -16,16 +17,9 @@
         <label for="post">Post</label>
         <textarea class="form-control" name="post" id="post" rows="5"></textarea>
     </div>
-
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary" id="submit" name="submit">Publish</button>
-    </div>
-
-</form>
-
- <form method="POST" action="/upload" enctype="multipart/form-data">
+    
     <input type="file" name="document" />
-    <input type="submit" />
+    <input class="btn btn-primary" type="submit" />
   </form>
   
  

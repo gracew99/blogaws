@@ -60,6 +60,7 @@ var upload = multer({
       bucket: 'nodejs3bucket',
       key: function (req, file, cb) {
           console.log(file);
+          console.log(s3);
           cb(null, file.originalname); //use Date.now() for unique file keys
       }
   })
@@ -125,11 +126,6 @@ app.get("/compose", function(req, res){
 
 //used by upload form for multer s3
 app.post('/upload', upload.array('document',1), function (req, res, next) {
-  res.redirect("/");
-});
-
-app.post("/compose", function(req, res){
-  // const link = "/posts/" + _.kebabCase(req.body.title);
   db.putdb(table, req.body.post, req.body.title, docClient, function(data){
     if (data === null){
       res.render("page", {
@@ -141,8 +137,23 @@ app.post("/compose", function(req, res){
       res.redirect("/");
     }
   });
-  
 });
+
+// app.post("/compose", function(req, res){
+//   // const link = "/posts/" + _.kebabCase(req.body.title);
+//   db.putdb(table, req.body.post, req.body.title, docClient, function(data){
+//     if (data === null){
+//       res.render("page", {
+//         title: "Error: No such post",
+//         intro: ""
+//       });
+//     }
+//     else{
+//       res.redirect("/");
+//     }
+//   });
+  
+// });
 
 
 
