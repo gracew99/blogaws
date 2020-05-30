@@ -1,23 +1,14 @@
 var AWS = require('aws-sdk');
 var fs = require('fs');
 
-module.exports.inits3 = inits3; 
+module.exports.listBucketss3 = listBucketss3; 
 module.exports.creates3 = creates3; 
 module.exports.uploads3 = uploads3; 
 module.exports.lists3 = lists3; 
 module.exports.downloads3 = downloads3; 
 
 
-function inits3(){
-    AWS.config.update({
-        region: "us-west-2",
-        accessKeyId: process.env.accessKeyId,
-        secretAccessKey: process.env.secretAccessKey
-    
-    });
-
-    // Create S3 service object
-    s3 = new AWS.S3({apiVersion: '2006-03-01'});
+function listBucketss3(s3){
 
     // Call S3 to list the buckets
     s3.listBuckets(function(err, data) {
@@ -31,7 +22,7 @@ function inits3(){
 
 
 // Create the parameters for calling createBucket
-function creates3(bucketname){
+function creates3(bucketname, s3){
 var bucketParams = {
     Bucket : bucketname,
     // ACL : 'public-read'
@@ -49,7 +40,7 @@ var bucketParams = {
 
 
 //   // call S3 to retrieve upload file to specified bucket
-function uploads3(bucketname, filename){
+function uploads3(bucketname, filename, s3){
     var uploadParams = {Bucket: bucketname, Key: '', Body: ''};
     var file = filename;
 
@@ -74,7 +65,7 @@ function uploads3(bucketname, filename){
 
 
 // // Call S3 to obtain a list of the objects in the bucket
-function lists3(bucketname){
+function lists3(bucketname, s3){
     var bucketParams = {
         Bucket : bucketname,
         // ACL : 'public-read'
@@ -91,7 +82,7 @@ function lists3(bucketname){
 
 
 
-function downloads3(bucketname, newfile, oldfile){
+function downloads3(bucketname, newfile, oldfile, s3){
     const filePath = './' + newfile;
     const bucketName = bucketname;
     const key = oldfile;

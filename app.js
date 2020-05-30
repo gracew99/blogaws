@@ -7,12 +7,17 @@ const date = require(__dirname+"/date.js");
 // Load the full build.
 var _ = require('lodash');
 var mongoose = require('mongoose');
+var fs = require('fs');
+const multer = require('multer'); // "multer": "^1.1.0"
+const multerS3 = require('multer-s3'); //"^1.4.1"
+
+
 // using Twilio SendGrid's v3 Node.js Library
 // https://github.com/sendgrid/sendgrid-nodejs
 const sgMail = require('@sendgrid/mail');
 var AWS = require("aws-sdk");
 const { v4: uuidv4 } = require('uuid');
-const s3 = require(__dirname+"/s3.js");
+const aws_s3 = require(__dirname+"/s3.js");
 const db = require(__dirname+"/db.js");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -30,12 +35,34 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
+// from inits3
+AWS.config.update({
+  region: "us-west-2",
+  accessKeyId: process.env.accessKeyId,
+  secretAccessKey: process.env.secretAccessKey
 
-s3.inits3();
-// s3.creates3("nodejs3bucket");
-// s3.uploads3("nodejs3bucket", "./helloworld.pdf");
-s3.lists3("nodejs3bucket");
-// s3.downloads3("nodejs3bucket", "download.pdf", "helloworld.pdf");
+});
+
+// Create S3 service object
+var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+aws_s3.creates3("nodejs3bucket", s3);
+aws_s3.listBucketss3(s3);
+
+aws_s3.uploads3("nodejs3bucket", "./helloworld.pdf", s3);
+aws_s3.lists3("nodejs3bucket", s3);
+aws_s3.downloads3("nodejs3bucket", "download.pdf", "helloworld.pdf", s3);
+
+
+var upload = multer({
+  storage: multerS3({
+      s3: s3,
+      bucket: 'nodejs3bucket',
+      key: function (req, file, cb) {
+          console.log(file);
+          cb(null, file.originalname); //use Date.now() for unique file keys
+      }
+  })
+});
 
 
 db.initdb();
@@ -93,6 +120,11 @@ app.get("/compose", function(req, res){
   res.render("compose", {
     title: "Compose",
   });
+});
+
+//used by upload form for multer
+app.post('/upload', upload.array('document',1), function (req, res, next) {
+  res.redirect("/");
 });
 
 app.post("/compose", function(req, res){
