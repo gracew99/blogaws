@@ -23,26 +23,11 @@
 
 </form>
 
-<form action="http://nodejs3bucket.s3.amazonaws.com/" method="post" enctype="multipart/form-data">
-     Key to upload: 
-     <input type=”input” name=”key” value=”user1/${filename}” />
-     <br /> 
-     <input type=”hidden” name=”acl” value=”public-read” />
-     <input type=”hidden” name=”success_action_redirect” value=”http://nodejs3bucket.s3.amazonaws.com/successful_upload.html" /> 
-     Content-Type: 
-     <input type=”input” name=”Content-Type” value=”image/jpeg” />
-     <br /> 
-     <input type=”text” name=”X-Amz-Credential” value="AKIA4KV2OYXTDMRIOBAW/20200528/us-east-1/s3/aws4_request" />    
-     <input type=”text” name=”X-Amz-Algorithm” value=”AWS4-HMAC-SHA256" /> 
-     <input type=”text” name=”X-Amz-Date” value=”20200528T000000Z” /> Tags for File: <input type=”input” name=”x-amz-meta-tag” value=”” />   
-     <br /> 
-     <input type=”hidden” name="Policy" value='<Base64-encoded policy string>' />     
-     <input type="hidden" name="X-Amz-Signature" value="<signature-value>"" />     
-    File:      
-     <input type="file"   name="file" />
-     <br />     <!-- The elements after this will be ignored -->     
-     <input type="submit" name="submit" value="Upload to Amazon S3" />      
-</form>    
+ <form method="POST" action="/upload" enctype="multipart/form-data">
+    <input type="file" name="document" />
+    <input type="submit" />
+  </form>
   
+ 
 
 <%- include("partials/footer.ejs") -%>
