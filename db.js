@@ -1,4 +1,4 @@
-var AWS = require('aws-sdk');
+var AWSdb = require('aws-sdk');
 const date = require(__dirname+"/date.js");
 const { v4: uuidv4 } = require('uuid');
 
@@ -8,15 +8,13 @@ module.exports.getdb = getdb;
 module.exports.putdb = putdb;
 
 function initdb(){
-    AWS.config.update({
+    AWSdb.config.update({
         region: "us-west-2",
         endpoint: "http://dynamodb.us-west-2.amazonaws.com",
         accessKeyId: process.env.accessKeyId,
         secretAccessKey: process.env.secretAccessKey
-      
       });
-      
-      var dynamodb = new AWS.DynamoDB();
+      var dynamodb = new AWSdb.DynamoDB();
       
       var params = {
           TableName : "TestBlogdb",

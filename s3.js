@@ -1,4 +1,4 @@
-var AWS = require('aws-sdk');
+// var AWS = require('aws-sdk');
 var fs = require('fs');
 
 module.exports.listBucketss3 = listBucketss3; 
@@ -87,7 +87,7 @@ function downloads3(bucketname, newfile, oldfile, s3){
     const bucketName = bucketname;
     const key = oldfile;
 
-    var s3 = new AWS.S3();
+    // var s3 = new AWS.S3();
 
     const downloadFile = (filePath, bucketName, key) => {
     const params = {

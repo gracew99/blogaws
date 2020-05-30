@@ -15,7 +15,8 @@ const multerS3 = require('multer-s3'); //"^1.4.1"
 // using Twilio SendGrid's v3 Node.js Library
 // https://github.com/sendgrid/sendgrid-nodejs
 const sgMail = require('@sendgrid/mail');
-var AWS = require("aws-sdk");
+var AWSdb = require("aws-sdk");
+var AWS3 = require("aws-sdk");
 const { v4: uuidv4 } = require('uuid');
 const aws_s3 = require(__dirname+"/s3.js");
 const db = require(__dirname+"/db.js");
@@ -36,7 +37,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
 // from inits3
-AWS.config.update({
+AWS3.config.update({
   region: "us-west-2",
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey
@@ -44,13 +45,13 @@ AWS.config.update({
 });
 
 // Create S3 service object
-var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+var s3 = new AWS3.S3({apiVersion: '2006-03-01'});
 aws_s3.creates3("nodejs3bucket", s3);
 aws_s3.listBucketss3(s3);
 
 aws_s3.uploads3("nodejs3bucket", "./helloworld.pdf", s3);
 aws_s3.lists3("nodejs3bucket", s3);
-aws_s3.downloads3("nodejs3bucket", "download.pdf", "helloworld.pdf", s3);
+aws_s3.downloads3("nodejs3bucket", "download.png", "schedule.png", s3);
 
 
 var upload = multer({
@@ -65,9 +66,9 @@ var upload = multer({
 });
 
 
-db.initdb();
+// db.initdb();
 
-var docClient = new AWS.DynamoDB.DocumentClient();
+var docClient = new AWSdb.DynamoDB.DocumentClient();
 var table = "TestBlogdb";
 
 
@@ -122,7 +123,7 @@ app.get("/compose", function(req, res){
   });
 });
 
-//used by upload form for multer
+//used by upload form for multer s3
 app.post('/upload', upload.array('document',1), function (req, res, next) {
   res.redirect("/");
 });
