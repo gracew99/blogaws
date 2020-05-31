@@ -1,6 +1,5 @@
 var AWSdb = require('aws-sdk');
 const date = require(__dirname+"/date.js");
-const { v4: uuidv4 } = require('uuid');
 
 module.exports.initdb = initdb;
 module.exports.querydb = querydb;
@@ -107,14 +106,15 @@ function getdb(table, pid, docClient, render){
     });
 }
 
-function putdb(table, post, title, docClient, render){
+function putdb(table, id, modified_id, post, title, docClient, render){
     var postdate = date.date();
     var posttime = date.time();
 
     var params = {
         TableName:table,
         Item:{
-            "id": uuidv4(),
+            "id": id,
+            "modified_id": modified_id,
             "body": post,
             "title": title,
             "postdate": postdate,

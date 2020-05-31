@@ -30,7 +30,6 @@ const titles = [];
 
 const app = express();
 
-
 app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -52,6 +51,8 @@ aws_s3.listBucketss3(s3);
 aws_s3.uploads3("nodejs3bucket", "./helloworld.pdf", s3);
 aws_s3.lists3("nodejs3bucket", s3);
 aws_s3.downloads3("nodejs3bucket", "download.png", "schedule.png", s3);
+var unique_id;
+var s3id;
 
 
 var upload = multer({
@@ -59,9 +60,11 @@ var upload = multer({
       s3: s3,
       bucket: 'nodejs3bucket',
       key: function (req, file, cb) {
+          unique_id = uuidv4();
+          s3id = unique_id.substring(0,10) + file.originalname.slice(-4);
           console.log(file);
           console.log(s3);
-          cb(null, file.originalname); //use Date.now() for unique file keys
+          cb(null, s3id); //use Date.now() for unique file keys
       }
   })
 });
@@ -110,11 +113,27 @@ app.get('/posts/:postId', function (req, res) {
         });
     }
     else{
+      const params1 = {
+        Bucket: "nodejs3bucket",
+        Key: data.Item.modified_id
+      };
+      
+      s3.getObject(params1, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else     console.log(data);           // successful response
+      });
+
+      var linkbuilder = "https://nodejs3bucket.s3-us-west-2.amazonaws.com/" + params1.Key;
+
       res.render("post", {
         post: data.Item,
+        imglink: linkbuilder
       }); 
     }
+
+
   });
+
 
 });
 
@@ -126,7 +145,7 @@ app.get("/compose", function(req, res){
 
 //used by upload form for multer s3
 app.post('/upload', upload.array('document',1), function (req, res, next) {
-  db.putdb(table, req.body.post, req.body.title, docClient, function(data){
+  db.putdb(table, unique_id, s3id, req.body.post, req.body.title, docClient, function(data){
     if (data === null){
       res.render("page", {
         title: "Error: No such post",
@@ -138,23 +157,6 @@ app.post('/upload', upload.array('document',1), function (req, res, next) {
     }
   });
 });
-
-// app.post("/compose", function(req, res){
-//   // const link = "/posts/" + _.kebabCase(req.body.title);
-//   db.putdb(table, req.body.post, req.body.title, docClient, function(data){
-//     if (data === null){
-//       res.render("page", {
-//         title: "Error: No such post",
-//         intro: ""
-//       });
-//     }
-//     else{
-//       res.redirect("/");
-//     }
-//   });
-  
-// });
-
 
 
 let port = process.env.PORT;
