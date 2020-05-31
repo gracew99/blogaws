@@ -45,12 +45,13 @@ AWS3.config.update({
 
 // Create S3 service object
 var s3 = new AWS3.S3({apiVersion: '2006-03-01'});
-aws_s3.creates3("nodejs3bucket", s3);
-aws_s3.listBucketss3(s3);
-
-aws_s3.uploads3("nodejs3bucket", "./helloworld.pdf", s3);
-aws_s3.lists3("nodejs3bucket", s3);
-aws_s3.downloads3("nodejs3bucket", "download.png", "schedule.png", s3);
+aws_s3.creates3("nodejs3bucket", s3, function(){
+  aws_s3.listBucketss3(s3);
+  aws_s3.uploads3("nodejs3bucket", "./helloworld.pdf", s3, function(){
+    aws_s3.lists3("nodejs3bucket", s3);
+    aws_s3.downloads3("nodejs3bucket", "download.png", "schedule.png", s3);
+  });
+});
 var unique_id;
 var s3id;
 
@@ -153,6 +154,7 @@ app.post('/upload', upload.array('document',1), function (req, res, next) {
       });
     }
     else{
+      // aws_s3.uploads3text("nodejs3bucket", req.body.title, req.body.post, s3);
       res.redirect("/");
     }
   });

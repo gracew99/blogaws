@@ -1,5 +1,6 @@
 var AWSdb = require('aws-sdk');
 const date = require(__dirname+"/date.js");
+const { v4: uuidv4 } = require('uuid');
 
 module.exports.initdb = initdb;
 module.exports.querydb = querydb;
@@ -80,7 +81,7 @@ function querydb(table, docClient, render){
         if (err) {
             console.error("Unable to query the table. Error JSON:", JSON.stringify(err, null, 2));
         } else {
-            console.log(data.Items);
+            // console.log(data.Items);
             render(data);
         }
       }
@@ -110,6 +111,11 @@ function putdb(table, id, modified_id, post, title, docClient, render){
     var postdate = date.date();
     var posttime = date.time();
 
+    // if (typeof variable == 'undefined') {
+    //     id = uuidv4();
+    //     modified_id = id;
+    // }
+    // console.log(id + " " + modified_id);
     var params = {
         TableName:table,
         Item:{

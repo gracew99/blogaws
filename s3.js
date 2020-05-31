@@ -1,11 +1,13 @@
 // var AWS = require('aws-sdk');
 var fs = require('fs');
+var _ = require('lodash');
 
 module.exports.listBucketss3 = listBucketss3; 
 module.exports.creates3 = creates3; 
 module.exports.uploads3 = uploads3; 
 module.exports.lists3 = lists3; 
 module.exports.downloads3 = downloads3; 
+module.exports.uploads3text = uploads3text; 
 
 
 function listBucketss3(s3){
@@ -36,6 +38,23 @@ var bucketParams = {
       console.log("Success", data.Location);
     }
   });
+}
+
+
+// call S3 to retrieve upload file to specified bucket
+function uploads3text(bucketname, title, text, s3){
+    var uploadParams = {Bucket: bucketname, Key: '', Body: ''};
+    uploadParams.Body = text;
+    uploadParams.Key = _.kebabCase(title) + '.txt';
+
+    // call S3 to retrieve upload file to specified bucket
+    s3.upload (uploadParams, function (err, data) {
+    if (err) {
+        console.log("Error", err);
+    } if (data) {
+        console.log("Upload Success", data.Location);
+    }
+    });
 }
 
 
