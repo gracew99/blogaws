@@ -3,6 +3,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
+const https = require("https");
 const date = require(__dirname+"/date.js");
 // Load the full build.
 var _ = require('lodash');
@@ -38,8 +39,8 @@ app.use(express.static("public"));
 // from inits3
 AWS3.config.update({
   region: "us-west-2",
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey
+  accessKeyId: process.env.AWSAccessKeyId,
+  secretAccessKey: process.env.AWSSecretKey
 
 });
 
@@ -103,6 +104,54 @@ app.get("/contact", function(req, res){
     intro: contactContent
   });
 });
+
+app.get("/sign-up", function(req, res){
+  res.sendFile(__dirname+"/signup.html");
+});
+
+
+app.post("/sign-up", function(req, res){
+  const inst="us8";
+  const listId='9261293309';
+  const apiKey=process.env.mailchimpApiKey;
+  const url = "https://usX.api.mailchimp.com/3.0/lists/9261293309";
+
+  const params = {
+    members:[
+      {
+        email_address: req.body.email,
+        status: "subscribed",
+        merge_fields:{
+          FNAME: req.body.fname,
+          LNAME: req.body.lname,
+        }
+      } 
+    ]
+  };
+
+
+  const options={
+    host: 'us8.api.mailchimp.com',
+    path: '/3.0/lists/9261293309',
+    method: 'POST',
+    auth: 'anystring:'+process.env.mailchimpApiKey
+  };
+  const request = https.request(options, function(err, res){
+    if (err){
+      console.log(err);
+    }
+    res.on("data", function(data){
+      console.log(JSON.parse(data));
+    });
+  });
+
+  const data = JSON.stringify(params);
+
+  request.write(data);
+  request.end();
+
+});
+
 
 app.get('/posts/:postId', function (req, res) {
   const pid = req.params.postId;
