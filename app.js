@@ -63,9 +63,8 @@ var upload = multer({
       bucket: 'nodejs3bucket',
       key: function (req, file, cb) {
           unique_id = uuidv4();
-          s3id = unique_id.substring(0,10) + file.originalname.slice(-4);
-          console.log(file);
-          console.log(s3);
+          s3id = unique_id.substring(0,10) + file.originalname.slice(-5);
+          // console.log(file);
           cb(null, s3id); //use Date.now() for unique file keys
       }
   })
@@ -136,12 +135,20 @@ app.post("/sign-up", function(req, res){
     method: 'POST',
     auth: 'anystring:'+process.env.mailchimpApiKey
   };
-  const request = https.request(options, function(err, res){
-    if (err){
-      console.log(err);
+  const request = https.request(options, function(response){
+
+    if (response.statusCode === 200){
+      res.redirect("/");
     }
-    res.on("data", function(data){
-      console.log(JSON.parse(data));
+    else{
+      res.render("page", {
+        title: "Error: could not subscribe",
+        intro: "",
+      });
+    }
+
+    response.on("data", function(data){
+      console.log(JSON.parse(data));    
     });
   });
 
@@ -202,11 +209,65 @@ app.post('/upload', upload.array('document',1), function (req, res, next) {
         intro: ""
       });
     }
-    else{
-      // aws_s3.uploads3text("nodejs3bucket", req.body.title, req.body.post, s3);
-      res.redirect("/");
-    }
+    // else{
+    //   // aws_s3.uploads3text("nodejs3bucket", req.body.title, req.body.post, s3);
+    //   res.redirect("/");
+    // }
   });
+
+  console.log("Sending to all subscribers...");
+
+  const options={
+    host: 'us8.api.mailchimp.com',
+    path: '/3.0/lists/9261293309/members?fields=members.email_address',
+    method: 'GET',
+    auth: 'anystring:'+process.env.mailchimpApiKey
+  };
+  const request = https.request(options, function(response){
+
+    if (response.statusCode === 200){
+      res.render("page", {
+        title: "Success!",
+        intro: "",
+      });
+    }
+    else{
+      res.render("page", {
+        title: "Error: could not get",
+        intro: "",
+      });
+    }
+
+    response.on("data", function(data){
+      var tostring = data.toString();
+      var result = JSON.parse(tostring);
+      var members = result.members;
+      var emails = [];
+      members.forEach(function(element){
+        emails.push({"email": element.email_address});
+      });
+
+      const msg = {
+        to: emails,
+        from: '7.knicksfan.7@gmail.com',
+        subject: req.body.title,
+        text: req.body.post
+      };
+      sgMail.send(msg, function(err){
+          if (err)
+          console.log(err);
+          else
+          console.log("sent");
+
+      });
+    });
+
+
+  });
+
+  request.end();
+
+
 });
 
 

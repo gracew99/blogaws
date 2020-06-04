@@ -139,14 +139,14 @@ function putdb(table, id, modified_id, post, title, docClient, render){
             render(true);
             console.log("Added item:", JSON.stringify(data, null, 2));
         }
-        const msg = {
-            to: [
-            {email: '7.knicksfan.7@gmail.com'}, 
-            {email: 'gw297@scarletmail.rutgers.edu'}],
-            from: '7.knicksfan.7@gmail.com',
-            subject: title,
-            text: post
-        };
+        // const msg = {
+        //     to: [
+        //     {email: '7.knicksfan.7@gmail.com'}, 
+        //     {email: 'gw297@scarletmail.rutgers.edu'}],
+        //     from: '7.knicksfan.7@gmail.com',
+        //     subject: title,
+        //     text: post
+        // };
         // sgMail.send(msg, function(err){
         //     if (err)
         //     console.log(err);
