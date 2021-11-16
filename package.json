@@ -14,7 +14,7 @@
   "dependencies": {
     "@sendgrid/mail": "^7.1.1",
     "aws-amplify": "^3.0.13",
-    "aws-sdk": "^2.684.0",
+    "aws-sdk": "^2.814.0",
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.16.3",
